@@ -12,7 +12,7 @@
          ServiceController   - 서비스 관련 요청 처리
          CommandsController  - 커맨드 관련 오청 처리
          NagiosController    - 나기오스 상태, 재시작 요청 처리
-         StatusController - 나기오스
+         StatisticController - 나기오스 상태
 
 # 미들웨어 변경 사항
     경로: app/Http/Kernel.php
