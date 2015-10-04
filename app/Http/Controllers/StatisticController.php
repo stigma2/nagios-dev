@@ -5,9 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use App\Utils\Nagios;
+
 
 class StatisticController extends Controller
 {
+
+    private $utils;
+
+    public function __construct()
+    {
+        $this->utils = new Nagios();
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -51,7 +61,7 @@ class StatisticController extends Controller
 
         if($id == 'host'){
             $sCommand   =    "/nagios/cgi-bin/statusjson.cgi?query=hostcount&hoststatus=up+down+unreachable+pending";
-            $aResult    =   json_decode($this->getCgiResult($sCommand),true);
+            $aResult    =   json_decode($this->utils->getCgiResult($sCommand),true);
 
             $aResult['data']['count']['problems']   = $aResult['data']['count']['unreachable'];
             $aResult['data']['count']['types']      = array_sum($aResult['data']['count']);
@@ -59,7 +69,7 @@ class StatisticController extends Controller
         }else if($id == 'service'){
 
             $sCommand   =    "/nagios/cgi-bin/statusjson.cgi?query=servicecount&servicestatus=ok+warning+critical+unknown+pending";
-            $aResult    =   json_decode($this->getCgiResult($sCommand),true);
+            $aResult    =   json_decode($this->utils->getCgiResult($sCommand),true);
 
             $aResult['data']['count']['problems']   = $aResult['data']['count']['critical'] + $aResult['data']['count']['unknown'];
             $aResult['data']['count']['types']      = array_sum($aResult['data']['count']);
@@ -79,7 +89,8 @@ class StatisticController extends Controller
 
             exec($sCommand, $aOutput, $nReturn);
 
-            dd($aOutput);
+            $aResult    =   $aOutput;
+            //dd($aOutput);
         }else {
 
             return (new Response(json_encode(['msg'=>'Invalid argument']),400))->header('Content-Type', "application/json");
@@ -124,34 +135,6 @@ class StatisticController extends Controller
         //
     }
 
-    public function getCgiResult($sCommand)
-    {
-        $username   =   config('nagios.username');
-        $password   =   config('nagios.password');
-        $sDomain    =   config('nagios.domain');
 
-        $sUrl   =    "{$sDomain}{$sCommand}";
-
-        //dd($sUrl);
-
-
-        $nPort  =   80;
-        $nTimeout   =   3;
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $sUrl);
-        curl_setopt($ch, CURLOPT_PORT ,  $nPort);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_COOKIE,  '');
-        curl_setopt($ch, CURLOPT_USERPWD,"$username:$password");
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750");
-        curl_setopt($ch, CURLOPT_TIMEOUT, $nTimeout);
-        $data = curl_exec($ch);
-
-        $curl_errno = curl_errno($ch);
-        $curl_error = curl_error($ch);
-
-        return $data;
-    }
 
 }

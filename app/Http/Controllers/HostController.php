@@ -6,10 +6,20 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
+use App\Utils\Nagios;
 
 
 class HostController extends Controller
 {
+
+    private $utils;
+
+    public function __construct()
+    {
+        $this->utils = new Nagios();
+    }
+
+
     /**
      * Display a listing of the resource.
      *
@@ -33,7 +43,7 @@ class HostController extends Controller
 
 
 
-        $aResult    =   json_decode($this->getCgiResult($sCommand));
+        $aResult    =   json_decode($this->utils->getCgiResult($sCommand));
 
         return response()->json($aResult);
     }
@@ -127,7 +137,7 @@ class HostController extends Controller
 
         $sCommand   =   "/nagios/cgi-bin/statusjson.cgi?query=host&hostname=$sHostName";
 
-        $aResult    =   json_decode($this->getCgiResult($sCommand));
+        $aResult    =   json_decode($this->utils->getCgiResult($sCommand));
 
         return response()->json($aResult);
 
@@ -167,34 +177,5 @@ class HostController extends Controller
         //
     }
 
-    public function getCgiResult($sCommand)
-    {
-        $username   =   config('nagios.username');
-        $password   =   config('nagios.password');
-        $sDomain    =   config('nagios.domain');
-
-        $sUrl   =    "{$sDomain}{$sCommand}";
-
-        //dd($sUrl);
-
-
-        $nPort  =   80;
-        $nTimeout   =   3;
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $sUrl);
-        curl_setopt($ch, CURLOPT_PORT ,  $nPort);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_COOKIE,  '');
-        curl_setopt($ch, CURLOPT_USERPWD,"$username:$password");
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750");
-        curl_setopt($ch, CURLOPT_TIMEOUT, $nTimeout);
-        $data = curl_exec($ch);
-
-        $curl_errno = curl_errno($ch);
-        $curl_error = curl_error($ch);
-
-        return $data;
-    }
 
 }
