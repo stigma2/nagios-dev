@@ -71,18 +71,26 @@ class ServiceController extends Controller
         //http://106.243.134.121:22180/nagios_dev/api/v1/hosts
 
 
-        $sNagiosRootDir   =   config('nagios.servers_dir');
+        $sServerDir   =   config('nagios.servers_dir');
+        $sObjectDir   =   config('nagios.objects_dir');
 
+        $sFileY = "{$sObjectDir}/templates.cfg";
+        $sFileN = "{$sServerDir}/services.cfg";
 
-        $sFile = "{$sNagiosRootDir}/services.cfg";
-
-        if (file_exists($sFile)) {
-            unlink($sFile);
+        if (file_exists($sFileY)) {
+            unlink($sFileY);
         }
+
+        if (file_exists($sFileN)) {
+            unlink($sFileN);
+        }
+
+
 
         if(isset($_POST['payload'])){
             $aPayload   =   json_decode($_POST['payload'],true);
-            $sContents  =   "";
+            $sContentsY  =   "";
+            $sContentsN  =   "";
 
             foreach($aPayload as $k => $v){
 
@@ -91,25 +99,37 @@ class ServiceController extends Controller
                     $sDetail    .=  "\t{$kDetail}\t{$vDetail}\n";
                 }
 
-                $sContents  .=   "define service{\n{$sDetail}}\n";
+                if($v['isTemplate'] == 'y'){
+
+                    $sContentsY  .=   "define host{\n{$sDetail}}\n";
+
+                }else{
+
+                    $sContentsN  .=   "define host{\n{$sDetail}}\n";
+
+                }
+
 
             }
 
             //echo $sContents;
 
-            if(file_put_contents($sFile, $sContents, FILE_APPEND | LOCK_EX)){
-                /*
-                $myfile = fopen($sFile, "r") or die("Unable to open file!");
-                echo fread($myfile,filesize($sFile));
-                fclose($myfile);
-                */
+            $isTemplateY    =   file_put_contents($sFileY, $sContentsY, FILE_APPEND | LOCK_EX);
+            $isTemplateN    =   file_put_contents($sFileN, $sContentsN, FILE_APPEND | LOCK_EX);
+
+
+
+            if($isTemplateY && $isTemplateN){
 
 
                 return (new Response(json_encode(['msg'=>'File writing success']),200))->header('Content-Type', "application/json");
 
             }else{
 
-                return (new Response(json_encode(['msg'=>'File writing fail']),400))->header('Content-Type', "application/json");
+                $sError =   '';
+                if(!$isTemplateY) $sError   .=   'templates.cfg ';
+                if(!$isTemplateN) $sError   .=   'hosts.cfg ';
+                return (new Response(json_encode(['msg'=>"{$sError} File writing fail"]),400))->header('Content-Type', "application/json");
 
             }
 
