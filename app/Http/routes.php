@@ -23,6 +23,7 @@ Route::group(['prefix' => 'api/v1'], function()
     Route::resource('services', 'ServiceController');
     Route::resource('nagios', 'NagiosController');
     Route::resource('commands', 'CommandsController');
+    Route::resource('statistic', 'StatisticController');
 
 
 });
