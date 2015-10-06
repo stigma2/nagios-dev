@@ -99,7 +99,7 @@ class ServiceController extends Controller
                     $sDetail    .=  "\t{$kDetail}\t{$vDetail}\n";
                 }
 
-                if($v['isTemplate'] == 'y'){
+                if($v['is_template'] == 'Y'){
 
                     $sContentsY  .=   "define host{\n{$sDetail}}\n";
 
