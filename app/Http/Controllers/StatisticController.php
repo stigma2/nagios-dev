@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use App\Utils\Nagios;
-
+use Illuminate\Http\Response;
 
 class StatisticController extends Controller
 {
@@ -57,7 +57,7 @@ class StatisticController extends Controller
      */
     public function show($id)
     {
-        //
+        //http://106.243.134.121:9090/nagios/cgi-bin/archivejson.cgi?query=alertlist&objecttypes=host&starttime=1424289217&endtime=1444289217
 
         if($id == 'host'){
             $sCommand   =    "/nagios/cgi-bin/statusjson.cgi?query=hostcount&hoststatus=up+down+unreachable+pending";
@@ -76,28 +76,31 @@ class StatisticController extends Controller
 
         }else if($id == 'log'){
 
-            if(isset($_GET['n'])){
-                $nN =   $_GET['n'];
+            if(isset($_GET['type']) && isset($_GET['starttime']) && isset($_GET['endtime']) ){
+                //http://106.243.134.121:9090/nagios/cgi-bin/archivejson.cgi?query=alertlist&objecttypes=host&starttime=1424289217&endtime=1444289217
+                $sCommand   =    "/nagios/cgi-bin/archivejson.cgi?query=alertlist&objecttypes={$_GET['type']}&starttime={$_GET['starttime']}&endtime={$_GET['endtime']}";
+                $aResult    =   json_decode($this->utils->getCgiResult($sCommand),true);
+                //dd($sCommand);
+                //dd($this->utils->getCgiResult($sCommand));
             }else{
-                $nN =    10;
+
+                return (new Response(json_encode(['msg'=>'Invalid argument']),400))->header('Content-Type', "application/json");
+
             }
 
-            $sCommand           =   "tail -n{$nN} /usr/local/nagios/var/nagios.log 2>&1";
 
-            $aOutput            =   [];
-            $nReturn            =   0;
 
-            exec($sCommand, $aOutput, $nReturn);
 
-            $aResult    =   $aOutput;
-            //dd($aOutput);
         }else {
 
             return (new Response(json_encode(['msg'=>'Invalid argument']),400))->header('Content-Type', "application/json");
 
         }
 
+        //echo "test";
+        //dd($_GET);
         return response()->json($aResult);
+
 
     }
 
