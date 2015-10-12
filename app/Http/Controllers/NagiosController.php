@@ -101,6 +101,29 @@ class NagiosController extends Controller
     public function show($id)
     {
         //
+
+        $sServerDir   =   config('nagios.servers_dir');
+        $sObjectDir   =   config('nagios.objects_dir');
+
+        $sFileY = "{$sObjectDir}/templates.cfg";
+        $sFileN = "{$sServerDir}/hosts.cfg";
+        $sFile3 = "{$sServerDir}/services.cfg";
+
+        $myfile = fopen($sFileY, "r") or die("Unable to open file!");
+        echo "\n\ntemplates.cfg\n\n";
+        echo fread($myfile,filesize($sFileY));
+        fclose($myfile);
+
+        $myfile = fopen($sFileN, "r") or die("Unable to open file!");
+        echo "\n\nhosts.cfg\n\n";
+        echo fread($myfile,filesize($sFileN));
+        fclose($myfile);
+
+        $myfile = fopen($sFile3, "r") or die("Unable to open file!");
+        echo "\n\nservices.cfg\n\n";
+        echo fread($myfile,filesize($sFile3));
+        fclose($myfile);
+
     }
 
     /**

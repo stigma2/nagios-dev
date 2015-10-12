@@ -6,9 +6,18 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
+use App\Utils\Nagios;
+
 
 class ServiceController extends Controller
 {
+    private $utils;
+
+    public function __construct()
+    {
+        $this->utils = new Nagios();
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -30,7 +39,7 @@ class ServiceController extends Controller
 
         }
 
-        $aResult    =   json_decode($this->getCgiResult($sCommand));
+        $aResult    =   json_decode($this->utils->getCgiResult($sCommand));
 
         return response()->json($aResult);
 
@@ -62,18 +71,26 @@ class ServiceController extends Controller
         //http://106.243.134.121:22180/nagios_dev/api/v1/hosts
 
 
-        $sNagiosRootDir   =   config('nagios.servers_dir');
+        $sServerDir   =   config('nagios.servers_dir');
+        $sObjectDir   =   config('nagios.objects_dir');
 
+        $sFileY = "{$sObjectDir}/templates.cfg";
+        $sFileN = "{$sServerDir}/services.cfg";
 
-        $sFile = "{$sNagiosRootDir}/services.cfg";
-
-        if (file_exists($sFile)) {
-            unlink($sFile);
+        if (file_exists($sFileY)) {
+            unlink($sFileY);
         }
+
+        if (file_exists($sFileN)) {
+            unlink($sFileN);
+        }
+
+
 
         if(isset($_POST['payload'])){
             $aPayload   =   json_decode($_POST['payload'],true);
-            $sContents  =   "";
+            $sContentsY  =   "";
+            $sContentsN  =   "";
 
             foreach($aPayload as $k => $v){
 
@@ -82,25 +99,37 @@ class ServiceController extends Controller
                     $sDetail    .=  "\t{$kDetail}\t{$vDetail}\n";
                 }
 
-                $sContents  .=   "define service{\n{$sDetail}}\n";
+                if($v['is_template'] == 'Y'){
+
+                    $sContentsY  .=   "define host{\n{$sDetail}}\n";
+
+                }else{
+
+                    $sContentsN  .=   "define host{\n{$sDetail}}\n";
+
+                }
+
 
             }
 
             //echo $sContents;
 
-            if(file_put_contents($sFile, $sContents, FILE_APPEND | LOCK_EX)){
-                /*
-                $myfile = fopen($sFile, "r") or die("Unable to open file!");
-                echo fread($myfile,filesize($sFile));
-                fclose($myfile);
-                */
+            $isTemplateY    =   file_put_contents($sFileY, $sContentsY, FILE_APPEND | LOCK_EX);
+            $isTemplateN    =   file_put_contents($sFileN, $sContentsN, FILE_APPEND | LOCK_EX);
+
+
+
+            if($isTemplateY && $isTemplateN){
 
 
                 return (new Response(json_encode(['msg'=>'File writing success']),200))->header('Content-Type', "application/json");
 
             }else{
 
-                return (new Response(json_encode(['msg'=>'File writing fail']),400))->header('Content-Type', "application/json");
+                $sError =   '';
+                if(!$isTemplateY) $sError   .=   'templates.cfg ';
+                if(!$isTemplateN) $sError   .=   'hosts.cfg ';
+                return (new Response(json_encode(['msg'=>"{$sError} File writing fail"]),400))->header('Content-Type', "application/json");
 
             }
 
@@ -130,7 +159,7 @@ class ServiceController extends Controller
             $sCommand   =    "/nagios/cgi-bin/statusjson.cgi?query=service&hostname={$sHostName}&servicedescription={$sServiceDescription}";
 
             $bSuccess   =   true;
-            $aResult    =   json_decode($this->getCgiResult($sCommand));
+            $aResult    =   json_decode($this->utils->getCgiResult($sCommand));
 
         }else{
 
@@ -177,35 +206,6 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         //
-    }
-
-    public function getCgiResult($sCommand)
-    {
-        $username   =   config('nagios.username');
-        $password   =   config('nagios.password');
-        $sDomain    =   config('nagios.domain');
-
-        $sUrl   =    "{$sDomain}{$sCommand}";
-
-
-
-        $nPort  =   80;
-        $nTimeout   =   3;
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $sUrl);
-        curl_setopt($ch, CURLOPT_PORT ,  $nPort);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch, CURLOPT_COOKIE,  '');
-        curl_setopt($ch, CURLOPT_USERPWD,"$username:$password");
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750");
-        curl_setopt($ch, CURLOPT_TIMEOUT, $nTimeout);
-        $data = curl_exec($ch);
-
-        $curl_errno = curl_errno($ch);
-        $curl_error = curl_error($ch);
-
-        return $data;
     }
 
 }
