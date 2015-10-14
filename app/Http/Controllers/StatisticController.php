@@ -63,16 +63,16 @@ class StatisticController extends Controller
             $sCommand   =    "/nagios/cgi-bin/statusjson.cgi?query=hostcount&hoststatus=up+down+unreachable+pending";
             $aResult    =   json_decode($this->utils->getCgiResult($sCommand),true);
 
-            $aResult['data']['count']['problems']   = $aResult['data']['count']['unreachable'];
             $aResult['data']['count']['types']      = array_sum($aResult['data']['count']);
+            $aResult['data']['count']['problems']   = $aResult['data']['count']['unreachable'] + $aResult['data']['count']['down'];
 
         }else if($id == 'service'){
 
             $sCommand   =    "/nagios/cgi-bin/statusjson.cgi?query=servicecount&servicestatus=ok+warning+critical+unknown+pending";
             $aResult    =   json_decode($this->utils->getCgiResult($sCommand),true);
 
-            $aResult['data']['count']['problems']   = $aResult['data']['count']['critical'] + $aResult['data']['count']['unknown'];
             $aResult['data']['count']['types']      = array_sum($aResult['data']['count']);
+            $aResult['data']['count']['problems']   = $aResult['data']['count']['critical'] + $aResult['data']['count']['unknown'];
 
         }else if($id == 'log'){
 
