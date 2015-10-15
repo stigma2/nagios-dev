@@ -90,6 +90,57 @@ class NagiosController extends Controller
     public function store(Request $request)
     {
         //
+        //dd($_POST);
+
+        if( isset($_POST['username']) && isset($_POST['password']) && isset($_POST['domain']) && isset($_POST['servers_dir']) && isset($_POST['objects_dir']) ){
+
+            $sFile = "/var/www/html/nagios_dev/config/nagios.php";
+
+            if (file_exists($sFile)) {
+                unlink($sFile);
+            }
+
+
+            $sContents  =   "
+<?php
+    return [
+
+
+        /*
+         *      나기오스 로그인 정보
+         *
+         */
+        'username'          => '{$_POST['username']}',
+        'password'          => '{$_POST['password']}',
+        'domain'            => '{$_POST['domain']}',
+
+
+        /*
+         *      나기오스 디렉토리 정보
+         *
+         */
+
+        'servers_dir'   =>  '{$_POST['servers_dir']}',    // hosts.conf, services.conf
+        'objects_dir'   =>  '{$_POST['objects_dir']}',    // commands.conf
+
+    ];
+";
+
+            $isTemplate    =   file_put_contents($sFile, $sContents, FILE_APPEND | LOCK_EX);
+
+            if($isTemplate) {
+                return (new Response(json_encode(['msg'=>'File writing success']),200))->header('Content-Type', "application/json");
+            }else{
+                return (new Response(json_encode(['msg'=>" File writing fail"]),400))->header('Content-Type', "application/json");
+            }
+
+
+        }else{
+            return (new Response(json_encode(['msg'=>'Invalid argument']),400))->header('Content-Type', "application/json");
+        }
+
+
+
     }
 
     /**
