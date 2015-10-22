@@ -72,14 +72,14 @@ class ServiceController extends Controller
 
 
         $sServerDir   =   config('nagios.servers_dir');
-        $sObjectDir   =   config('nagios.objects_dir');
+        // $sObjectDir   =   config('nagios.objects_dir');
 
-        $sFileY = "{$sObjectDir}/templates.cfg";
+        // $sFileY = "{$sObjectDir}/templates.cfg";
         $sFileN = "{$sServerDir}/services.cfg";
 
-        if (file_exists($sFileY)) {
-            unlink($sFileY);
-        }
+        // if (file_exists($sFileY)) {
+        //     unlink($sFileY);
+        // }
 
         if (file_exists($sFileN)) {
             unlink($sFileN);
@@ -87,9 +87,9 @@ class ServiceController extends Controller
 
 
 
-        if(isset($_POST['payload'])){
+        if (isset($_POST['payload'])) {
             $aPayload   =   json_decode($_POST['payload'],true);
-            $sContentsY  =   "";
+            // $sContentsY  =   "";
             $sContentsN  =   "";
 
             foreach($aPayload as $k => $v){
@@ -99,41 +99,43 @@ class ServiceController extends Controller
                     $sDetail    .=  "\t{$kDetail}\t{$vDetail}\n";
                 }
 
-                if($v['is_template'] == 'Y'){
+                $sContentsN  .=   "define host{\n{$sDetail}}\n";
 
-                    $sContentsY  .=   "define host{\n{$sDetail}}\n";
+                // if($v['is_template'] == 'Y'){
 
-                }else{
+                //     $sContentsY  .=   "define host{\n{$sDetail}}\n";
 
-                    $sContentsN  .=   "define host{\n{$sDetail}}\n";
+                // }else{
 
-                }
+                //     $sContentsN  .=   "define host{\n{$sDetail}}\n";
+
+                // }
 
 
             }
 
             //echo $sContents;
 
-            $isTemplateY    =   file_put_contents($sFileY, $sContentsY, FILE_APPEND | LOCK_EX);
+            // $isTemplateY    =   file_put_contents($sFileY, $sContentsY, FILE_APPEND | LOCK_EX);
             $isTemplateN    =   file_put_contents($sFileN, $sContentsN, FILE_APPEND | LOCK_EX);
 
 
 
-            if($isTemplateY && $isTemplateN){
-
+            // if($isTemplateY && $isTemplateN){
+            if ($isTemplateN) {
 
                 return (new Response(json_encode(['msg'=>'File writing success']),200))->header('Content-Type', "application/json");
 
-            }else{
+            } else {
 
                 $sError =   '';
-                if(!$isTemplateY) $sError   .=   'templates.cfg ';
-                if(!$isTemplateN) $sError   .=   'hosts.cfg ';
+                // if(!$isTemplateY) $sError   .=   'templates.cfg ';
+                if(!$isTemplateN) $sError   .=   'services.cfg ';
                 return (new Response(json_encode(['msg'=>"{$sError} File writing fail"]),400))->header('Content-Type', "application/json");
 
             }
 
-        }else{
+        } else {
 
             return (new Response(json_encode(['msg'=>'Invalid argument']),400))->header('Content-Type', "application/json");
 
