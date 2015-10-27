@@ -72,7 +72,7 @@ class StatisticController extends Controller
             $aResult    =   json_decode($this->utils->getCgiResult($sCommand),true);
 
             $aResult['data']['count']['types']      = array_sum($aResult['data']['count']);
-            $aResult['data']['count']['problems']   = $aResult['data']['count']['critical'] + $aResult['data']['count']['unknown'];
+            $aResult['data']['count']['problems']   = $aResult['data']['count']['critical'] + $aResult['data']['count']['unknown'] + $aResult['data']['count']['warning'];
 
         }else if($id == 'log'){
 
